@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔒 Vérification de sécurité</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        .captcha-container {
+            background: #f0f2f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #e2f3ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.95em;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.8em;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 VÉRIFICATION ANTI-BOT</h1>
+        
+        <div class="info">
+            ⚡ Ce site utilise reCAPTCHA pour se protéger contre les robots.
+            Veuillez compléter la vérification pour continuer.
+        </div>
+        
+        <div class="captcha-container">
+            <div class="g-recaptcha" data-sitekey="6LfJ7bIUAAAAAHqUy2jB3TqYJpLhXqHqZqHqZ"></div>
+        </div>
+        
+        <button class="btn" onclick="verifyCaptcha()" id="verifyBtn">
+            ✅ VÉRIFIER
+        </button>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="stats">
+            <span>🛡️ Protection active</span>
+            <span>⚡ Temps réel</span>
+        </div>
+        
+        <div class="footer">
+            © 2026 - Tous droits réservés
+        </div>
+    </div>
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        async function verifyCaptcha() {
+            const token = document.querySelector('[name="g-recaptcha-response"]')?.value;
+            const btn = document.getElementById('verifyBtn');
+            const status = document.getElementById('status');
+            
+            if (!token) {
+                status.style.display = 'block';
+                status.className = 'status error';
+                status.innerHTML = '❌ Veuillez compléter le captcha';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Vérification en cours...';
+            
+            status.style.display = 'block';
+            status.className = 'status info';
+            status.innerHTML = '⏳ Traitement de votre demande...';
+            
+            try {
+                const response = await fetch('/api/captcha/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.className = 'status success';
+                    status.innerHTML = '✅ Vérification réussie ! Vous pouvez continuer.';
+                    
+                    // Redirection après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Erreur de vérification');
+                }
+                
+            } catch (error) {
+                status.className = 'status error';
+                status.innerHTML = '❌ Erreur: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✅ VÉRIFIER';
+            }
+        }
+    </script>
+</body>
+</html>

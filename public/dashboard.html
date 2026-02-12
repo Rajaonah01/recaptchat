@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Dashboard - Mes gains</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-title {
+            font-size: 0.9em;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-sub {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+        
+        .progress-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .progress-title {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .login-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        input, button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            margin: 5px;
+        }
+        
+        input {
+            background: rgba(255, 255, 255, 0.9);
+            width: 200px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .history-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            color: black;
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255,215,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 DASHBOARD DE GAINS</h1>
+            <p style="color: #a0a0a0;">Connectez-vous pour voir vos statistiques en temps réel</p>
+        </div>
+        
+        <!-- SECTION LOGIN -->
+        <div class="login-section" id="loginSection">
+            <h3 style="margin-bottom: 15px;">🔐 Accès administrateur</h3>
+            <input type="password" id="password" placeholder="Mot de passe">
+            <button onclick="login()">Se connecter</button>
+            <p id="loginError" style="color: #ff6b6b; margin-top: 10px; display: none;"></p>
+        </div>
+        
+        <!-- SECTION STATS (CACHÉE PAR DÉFAUT) -->
+        <div id="statsSection" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Aujourd'hui</div>
+                    <div class="stat-value" id="todayAmount">0.0000$</div>
+                    <div class="stat-sub" id="todayCaptchas">0 captchas</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Cette semaine</div>
+                    <div class="stat-value" id="weekAmount">0.0000$</div>
+                    <div class="stat-sub" id="weekCaptchas">0 captchas</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Ce mois</div>
+                    <div class="stat-value" id="monthAmount">0.0000$</div>
+                    <div class="stat-sub" id="monthCaptchas">0 captchas</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Total</div>
+                    <div class="stat-value" id="totalAmount">0.0000$</div>
+                    <div class="stat-sub" id="totalCaptchas">0 captchas</div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-title">🎯 Objectif journalier (10$)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="dailyProgress" style="width: 0%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span id="dailyEarned">0.00$</span>
+                    <span>10.00$</span>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Solde 2captcha</div>
+                    <div class="stat-value" id="balance">0.0000$</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Captchas résolus</div>
+                    <div class="stat-value" id="solved">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Gain par captcha</div>
+                    <div class="stat-value" id="rate">0.0005$</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Uptime</div>
+                    <div class="stat-value" id="uptime">0h</div>
+                </div>
+            </div>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📜 Historique des paiements</h3>
+                <div id="historyList">
+                    <p style="color: #a0a0a0; text-align: center;">Aucun paiement pour le moment</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <button onclick="withdraw()" style="background: linear-gradient(45deg, #00c853, #00e676); color: white;">
+                    💸 RETIRER MES GAINS
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="refreshStats()" id="refreshBtn" style="display: none;">
+        🔄 ACTUALISER
+    </button>
+    
+    <script>
+        let isLoggedIn = false;
+        
+        async function login() {
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password })
+                });
+                
+                if (response.status === 401) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerHTML = '❌ Mot de passe incorrect';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // Login réussi
+                isLoggedIn = true;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('refreshBtn').style.display = 'block';
+                
+                // Afficher les stats
+                updateStats(data);
+                
+            } catch (error) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '❌ Erreur de connexion';
+            }
+        }
+        
+        function updateStats(data) {
+            if (!data.earnings) return;
+            
+            // Aujourd'hui
+            document.getElementById('todayAmount').textContent = data.earnings.today.amount.toFixed(4) + '$';
+            document.getElementById('todayCaptchas').textContent = data.earnings.today.captchas + ' captchas';
+            
+            // Cette semaine
+            document.getElementById('weekAmount').textContent = data.earnings.thisWeek.amount.toFixed(4) + '$';
+            document.getElementById('weekCaptchas').textContent = data.earnings.thisWeek.captchas + ' captchas';
+            
+            // Ce mois
+            document.getElementById('monthAmount').textContent = data.earnings.thisMonth.amount.toFixed(4) + '$';
+            document.getElementById('monthCaptchas').textContent = data.earnings.thisMonth.captchas + ' captchas';
+            
+            // Total
+            document.getElementById('totalAmount').textContent = data.earnings.total.amount.toFixed(4) + '$';
+            document.getElementById('totalCaptchas').textContent = data.earnings.total.captchas + ' captchas';
+            
+            // Progression quotidienne
+            const dailyAmount = data.earnings.today.amount || 0;
+            const progress = Math.min(100, (dailyAmount / 10) * 100);
+            document.getElementById('dailyProgress').style.width = progress + '%';
+            document.getElementById('dailyEarned').textContent = dailyAmount.toFixed(2) + '$';
+            
+            // Autres stats
+            document.getElementById('balance').textContent = (data.balance || 0) + '$';
+            document.getElementById('solved').textContent = data.earnings.total.captchas || 0;
+            
+            // Uptime
+            const uptime = data.server?.uptime || 0;
+            const hours = Math.floor(uptime / 3600);
+            document.getElementById('uptime').textContent = hours + 'h';
+            
+            // Historique
+            if (data.paymentHistory?.length > 0) {
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = data.paymentHistory.map(p => `
+                    <div class="history-item">
+                        <span>💰 ${p.amount.toFixed(2)}$</span>
+                        <span style="color: #a0a0a0;">${new Date(p.timestamp).toLocaleDateString()}</span>
+                        <span style="color: #00ff88;">${p.status}</span>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        async function refreshStats() {
+            if (!isLoggedIn) return;
+            
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                updateStats(data);
+                
+            } catch (error) {
+                console.error('Erreur refresh:', error);
+            }
+        }
+        
+        async function withdraw() {
+            const password = document.getElementById('password').value;
+            const amount = prompt('Montant à retirer (minimum 10$):', '10');
+            
+            if (!amount) return;
+            
+            const address = prompt('Adresse de retrait (BTC/ETH/USDT):');
+            if (!address) return;
+            
+            try {
+                const response = await fetch('/api/admin/withdraw', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password, amount, address })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Demande de retrait envoyée !\nID: ${data.withdrawal.id}`);
+                    refreshStats();
+                } else {
+                    alert('❌ Erreur: ' + data.error);
+                }
+                
+            } catch (error) {
+                alert('❌ Erreur de connexion');
+            }
+        }
+        
+        // Rafraîchir toutes les 30 secondes
+        setInterval(() => {
+            if (isLoggedIn) refreshStats();
+        }, 30000);
+    </script>
+</body>
+</html>
