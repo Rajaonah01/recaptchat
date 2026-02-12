@@ -2,397 +2,665 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Dashboard - Mes gains</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📱 TÉLÉCOMANDE - Téléphone Cassé</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(145deg, #0f0c1f, #1a1a2e);
             color: white;
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 500px;
+            width: 100%;
             margin: 0 auto;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
+        /* CARTE PRINCIPALE */
+        .main-card {
+            background: rgba(20, 25, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 24px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
         
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        /* EN-TÊTE */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .title h1 {
+            font-size: 1.5rem;
             background: linear-gradient(45deg, #ffd700, #ffa500);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .stat-title {
-            font-size: 0.9em;
-            color: #a0a0a0;
+        .badge {
+            background: #ff5252;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
+        }
+        
+        .badge.connected {
+            background: #00c853;
+        }
+        
+        /* ÉCRAN DU TÉLÉPHONE */
+        .phone-frame {
+            background: #000;
+            border-radius: 36px;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ffd700;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        .phone-screen {
+            background: #0a0c0e;
+            border-radius: 30px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .screen-content {
+            text-align: center;
+            z-index: 2;
+        }
+        
+        .screen-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+        
+        .screen-message {
+            font-size: 1.1rem;
+            font-weight: bold;
             margin-bottom: 10px;
         }
         
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 5px;
-        }
-        
-        .stat-sub {
+        .screen-submessage {
             color: #a0a0a0;
-            font-size: 0.9em;
+            font-size: 0.85rem;
         }
         
-        .progress-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
+        /* INFOS APPAREIL */
+        .device-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            font-size: 0.85rem;
         }
         
-        .progress-title {
-            font-size: 1.2em;
-            margin-bottom: 15px;
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stat-value {
             color: #ffd700;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00ccff);
-            width: 0%;
-            transition: width 0.5s;
-        }
-        
-        .login-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-        }
-        
-        input, button {
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: none;
-            margin: 5px;
-        }
-        
-        input {
-            background: rgba(255, 255, 255, 0.9);
-            width: 200px;
-        }
-        
-        button {
-            background: linear-gradient(45deg, #ffd700, #ffa500);
-            color: #000;
             font-weight: bold;
+        }
+        
+        /* GRILLE DE BOUTONS */
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .control-btn {
+            background: #2a2a3a;
+            border: none;
+            color: white;
+            padding: 18px 0;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.1s;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        button:hover {
-            transform: translateY(-2px);
+        .control-btn:active {
+            transform: scale(0.95);
+            background: #3a3a4a;
         }
         
-        .history-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
+        .control-btn.large {
+            grid-column: span 2;
         }
         
-        .history-item {
+        .btn-icon {
+            font-size: 1.8rem;
+        }
+        
+        .btn-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        /* COULEURS DES BOUTONS */
+        .btn-green { background: #00c853; }
+        .btn-blue { background: #2196f3; }
+        .btn-yellow { background: #ffd700; color: black; }
+        .btn-red { background: #ff5252; }
+        .btn-purple { background: #9c27b0; }
+        
+        /* PAVÉ TACTILE */
+        .touchpad-section {
+            background: rgba(0,0,0,0.3);
+            border-radius: 24px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .touchpad-title {
             display: flex;
             justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            color: #a0a0a0;
         }
         
-        .refresh-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #ffd700, #ffa500);
-            color: black;
-            padding: 15px 25px;
+        .touchpad-area {
+            background: #0a0c1a;
+            border-radius: 20px;
+            height: 200px;
+            position: relative;
+            border: 2px solid #4a4a6a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: crosshair;
+        }
+        
+        .touch-coords {
+            background: rgba(0,0,0,0.8);
+            padding: 8px 16px;
             border-radius: 50px;
+            font-size: 0.9rem;
+            color: #ffd700;
+            margin-top: 10px;
+        }
+        
+        /* SECTION CONNEXION */
+        .connection-section {
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #2196f3;
+        }
+        
+        .ip-input-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .ip-input {
+            flex: 1;
+            background: #1a1a2a;
+            border: 2px solid #4a4a6a;
+            color: white;
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 1rem;
+        }
+        
+        .connect-btn {
+            background: #2196f3;
+            color: white;
             border: none;
+            padding: 15px 25px;
+            border-radius: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(255,215,0,0.3);
+        }
+        
+        .disconnect-btn {
+            background: #ff5252;
+        }
+        
+        /* CAPTURE D'ÉCRAN */
+        .screenshot-preview {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .screenshot-img {
+            width: 100%;
+            border-radius: 16px;
+            border: 2px solid #ffd700;
+        }
+        
+        /* PIED DE PAGE */
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.7rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>💰 DASHBOARD DE GAINS</h1>
-            <p style="color: #a0a0a0;">Connectez-vous pour voir vos statistiques en temps réel</p>
-        </div>
-        
-        <!-- SECTION LOGIN -->
-        <div class="login-section" id="loginSection">
-            <h3 style="margin-bottom: 15px;">🔐 Accès administrateur</h3>
-            <input type="password" id="password" placeholder="Mot de passe">
-            <button onclick="login()">Se connecter</button>
-            <p id="loginError" style="color: #ff6b6b; margin-top: 10px; display: none;"></p>
-        </div>
-        
-        <!-- SECTION STATS (CACHÉE PAR DÉFAUT) -->
-        <div id="statsSection" style="display: none;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">Aujourd'hui</div>
-                    <div class="stat-value" id="todayAmount">0.0000$</div>
-                    <div class="stat-sub" id="todayCaptchas">0 captchas</div>
+        <div class="main-card">
+            
+            <!-- HEADER -->
+            <div class="header">
+                <div class="title">
+                    <span style="font-size: 2rem;">📱</span>
+                    <h1>TÉLÉPHONE CASSÉ</h1>
                 </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Cette semaine</div>
-                    <div class="stat-value" id="weekAmount">0.0000$</div>
-                    <div class="stat-sub" id="weekCaptchas">0 captchas</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Ce mois</div>
-                    <div class="stat-value" id="monthAmount">0.0000$</div>
-                    <div class="stat-sub" id="monthCaptchas">0 captchas</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Total</div>
-                    <div class="stat-value" id="totalAmount">0.0000$</div>
-                    <div class="stat-sub" id="totalCaptchas">0 captchas</div>
+                <div id="connectionBadge" class="badge">🔴 HORS LIGNE</div>
+            </div>
+            
+            <!-- SIMULATEUR D'ÉCRAN -->
+            <div class="phone-frame">
+                <div class="phone-screen" id="phoneScreen">
+                    <div class="screen-content" id="screenContent">
+                        <div class="screen-icon">📱</div>
+                        <div class="screen-message" style="color: #ff5252;">TÉLÉPHONE NON CONNECTÉ</div>
+                        <div class="screen-submessage">Connecte le téléphone pour commencer</div>
+                    </div>
                 </div>
             </div>
             
-            <div class="progress-section">
-                <div class="progress-title">🎯 Objectif journalier (10$)</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="dailyProgress" style="width: 0%;"></div>
+            <!-- STATS BATTERIE / RÉSEAU -->
+            <div class="device-stats">
+                <div class="stat-item">
+                    <span>🔋 Batterie</span>
+                    <span class="stat-value" id="batteryLevel">--</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <span id="dailyEarned">0.00$</span>
-                    <span>10.00$</span>
+                <div class="stat-item">
+                    <span>📶 WiFi</span>
+                    <span class="stat-value" id="wifiLevel">--</span>
                 </div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">Solde 2captcha</div>
-                    <div class="stat-value" id="balance">0.0000$</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Captchas résolus</div>
-                    <div class="stat-value" id="solved">0</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Gain par captcha</div>
-                    <div class="stat-value" id="rate">0.0005$</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-title">Uptime</div>
-                    <div class="stat-value" id="uptime">0h</div>
+                <div class="stat-item">
+                    <span>💾 Stockage</span>
+                    <span class="stat-value" id="storageLevel">--</span>
                 </div>
             </div>
             
-            <div class="history-section">
-                <h3 style="margin-bottom: 20px;">📜 Historique des paiements</h3>
-                <div id="historyList">
-                    <p style="color: #a0a0a0; text-align: center;">Aucun paiement pour le moment</p>
-                </div>
-            </div>
-            
-            <div style="margin-top: 30px; text-align: center;">
-                <button onclick="withdraw()" style="background: linear-gradient(45deg, #00c853, #00e676); color: white;">
-                    💸 RETIRER MES GAINS
+            <!-- BOUTONS DE CONTRÔLE RAPIDE -->
+            <div class="button-grid">
+                <button class="control-btn" onclick="sendCommand('volume_up')">
+                    <span class="btn-icon">🔊</span>
+                    <span class="btn-label">Volume +</span>
                 </button>
+                <button class="control-btn" onclick="sendCommand('volume_down')">
+                    <span class="btn-icon">🔉</span>
+                    <span class="btn-label">Volume -</span>
+                </button>
+                <button class="control-btn btn-yellow" onclick="sendCommand('wakeup')">
+                    <span class="btn-icon">⏻</span>
+                    <span class="btn-label">Réveiller</span>
+                </button>
+                
+                <button class="control-btn btn-blue" onclick="sendCommand('home')">
+                    <span class="btn-icon">🏠</span>
+                    <span class="btn-label">Accueil</span>
+                </button>
+                <button class="control-btn btn-blue" onclick="sendCommand('back')">
+                    <span class="btn-icon">🔙</span>
+                    <span class="btn-label">Retour</span>
+                </button>
+                <button class="control-btn btn-blue" onclick="sendCommand('recent')">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-label">Récents</span>
+                </button>
+            </div>
+            
+            <!-- BOUTONS SPÉCIAUX -->
+            <div style="display: flex; gap: 12px; margin: 12px 0;">
+                <button class="control-btn btn-green large" onclick="sendCommand('screenshot')">
+                    <span class="btn-icon">📸</span>
+                    <span class="btn-label">CAPTURE ÉCRAN</span>
+                </button>
+                <button class="control-btn btn-red" onclick="sendCommand('power')">
+                    <span class="btn-icon">⏻</span>
+                    <span class="btn-label">Veille</span>
+                </button>
+            </div>
+            
+            <!-- PAVÉ TACTILE -->
+            <div class="touchpad-section">
+                <div class="touchpad-title">
+                    <span>🖱️ PAVÉ TACTILE</span>
+                    <span id="touchStatus">👆 Tap / Glisse</span>
+                </div>
+                <div class="touchpad-area" id="touchpad" 
+                     onclick="handleTap(event)"
+                     onmousemove="handleMove(event)"
+                     onmouseleave="handleLeave()">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🖐️</div>
+                    <div class="touch-coords" id="touchCoords">X: 0, Y: 0</div>
+                    <div style="font-size: 0.75rem; color: #00c853; margin-top: 10px;">
+                        Clique = Tap • Glisse = Swipe
+                    </div>
+                </div>
+                
+                <!-- SWIPES RAPIDES -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px;">
+                    <button class="control-btn" style="padding: 12px;" onclick="sendCommand('swipe_up')">
+                        <span class="btn-icon">⬆️</span>
+                    </button>
+                    <button class="control-btn" style="padding: 12px;" onclick="sendCommand('swipe_down')">
+                        <span class="btn-icon">⬇️</span>
+                    </button>
+                    <button class="control-btn" style="padding: 12px;" onclick="sendCommand('swipe_left')">
+                        <span class="btn-icon">⬅️</span>
+                    </button>
+                    <button class="control-btn" style="padding: 12px;" onclick="sendCommand('swipe_right')">
+                        <span class="btn-icon">➡️</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- CONNEXION ADB OVER WIFI -->
+            <div class="connection-section" id="connectionSection">
+                <h3 style="color: #2196f3; margin-bottom: 10px;">🔌 CONNEXION ADB WIFI</h3>
+                <p style="color: #a0a0a0; font-size: 0.85rem; margin-bottom: 15px;">
+                    1. Branche le téléphone en USB → <code style="background: #000; padding: 4px 8px; border-radius: 4px;">adb tcpip 5555</code><br>
+                    2. Débranche le câble<br>
+                    3. Entre l'IP du téléphone ci-dessous
+                </p>
+                
+                <div class="ip-input-group">
+                    <input type="text" id="ipAddress" class="ip-input" 
+                           placeholder="192.168.1.xxx" 
+                           value="">
+                    <button id="connectBtn" class="connect-btn" onclick="toggleConnection()">
+                        🔌 CONNECTER
+                    </button>
+                </div>
+                
+                <div id="connectionStatus" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>📡 Statut ADB:</span>
+                        <span id="adbStatus">⚪ Déconnecté</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                        <span>📱 Appareil:</span>
+                        <span id="deviceId">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- APERÇU CAPTURE (CACHÉ PAR DÉFAUT) -->
+            <div id="screenshotPreview" class="screenshot-preview">
+                <h4 style="color: #ffd700; margin-bottom: 10px;">📸 Dernière capture</h4>
+                <img id="screenshotImg" class="screenshot-img" src="" alt="Capture écran">
+            </div>
+            
+            <div class="footer">
+                ⚠️ Contrôle à distance - Nécessite débogage USB activé<br>
+                Serveur actif • Téléphone cassé • Mode dépannage
             </div>
         </div>
     </div>
-    
-    <button class="refresh-btn" onclick="refreshStats()" id="refreshBtn" style="display: none;">
-        🔄 ACTUALISER
-    </button>
-    
+
     <script>
-        let isLoggedIn = false;
+        // ========== ÉTAT DE LA CONNEXION ==========
+        let isConnected = false;
+        let deviceIp = '';
+        let lastTouchX = 0;
+        let lastTouchY = 0;
         
-        async function login() {
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('loginError');
-            
+        // ========== VÉRIFICATION SERVEUR ==========
+        async function checkServer() {
             try {
-                const response = await fetch('/api/admin/stats', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ password })
-                });
-                
-                if (response.status === 401) {
-                    errorDiv.style.display = 'block';
-                    errorDiv.innerHTML = '❌ Mot de passe incorrect';
-                    return;
+                const response = await fetch('/api/ping');
+                if (response.ok) {
+                    console.log('✅ Serveur connecté');
                 }
-                
-                const data = await response.json();
-                
-                // Login réussi
-                isLoggedIn = true;
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('statsSection').style.display = 'block';
-                document.getElementById('refreshBtn').style.display = 'block';
-                
-                // Afficher les stats
-                updateStats(data);
-                
             } catch (error) {
-                errorDiv.style.display = 'block';
-                errorDiv.innerHTML = '❌ Erreur de connexion';
+                console.error('❌ Serveur indisponible');
             }
         }
         
-        function updateStats(data) {
-            if (!data.earnings) return;
-            
-            // Aujourd'hui
-            document.getElementById('todayAmount').textContent = data.earnings.today.amount.toFixed(4) + '$';
-            document.getElementById('todayCaptchas').textContent = data.earnings.today.captchas + ' captchas';
-            
-            // Cette semaine
-            document.getElementById('weekAmount').textContent = data.earnings.thisWeek.amount.toFixed(4) + '$';
-            document.getElementById('weekCaptchas').textContent = data.earnings.thisWeek.captchas + ' captchas';
-            
-            // Ce mois
-            document.getElementById('monthAmount').textContent = data.earnings.thisMonth.amount.toFixed(4) + '$';
-            document.getElementById('monthCaptchas').textContent = data.earnings.thisMonth.captchas + ' captchas';
-            
-            // Total
-            document.getElementById('totalAmount').textContent = data.earnings.total.amount.toFixed(4) + '$';
-            document.getElementById('totalCaptchas').textContent = data.earnings.total.captchas + ' captchas';
-            
-            // Progression quotidienne
-            const dailyAmount = data.earnings.today.amount || 0;
-            const progress = Math.min(100, (dailyAmount / 10) * 100);
-            document.getElementById('dailyProgress').style.width = progress + '%';
-            document.getElementById('dailyEarned').textContent = dailyAmount.toFixed(2) + '$';
-            
-            // Autres stats
-            document.getElementById('balance').textContent = (data.balance || 0) + '$';
-            document.getElementById('solved').textContent = data.earnings.total.captchas || 0;
-            
-            // Uptime
-            const uptime = data.server?.uptime || 0;
-            const hours = Math.floor(uptime / 3600);
-            document.getElementById('uptime').textContent = hours + 'h';
-            
-            // Historique
-            if (data.paymentHistory?.length > 0) {
-                const historyList = document.getElementById('historyList');
-                historyList.innerHTML = data.paymentHistory.map(p => `
-                    <div class="history-item">
-                        <span>💰 ${p.amount.toFixed(2)}$</span>
-                        <span style="color: #a0a0a0;">${new Date(p.timestamp).toLocaleDateString()}</span>
-                        <span style="color: #00ff88;">${p.status}</span>
-                    </div>
-                `).join('');
+        // ========== ENVOI DE COMMANDES ==========
+        async function sendCommand(cmd) {
+            if (!isConnected) {
+                alert('❌ Connecte d\'abord le téléphone cassé !');
+                return;
             }
-        }
-        
-        async function refreshStats() {
-            if (!isLoggedIn) return;
             
-            const password = document.getElementById('password').value;
+            // Feedback visuel
+            const btn = document.querySelector(`[onclick*="${cmd}"]`);
+            if (btn) {
+                btn.style.transform = 'scale(0.9)';
+                setTimeout(() => btn.style.transform = '', 150);
+            }
             
             try {
-                const response = await fetch('/api/admin/stats', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ password })
-                });
-                
-                const data = await response.json();
-                updateStats(data);
-                
-            } catch (error) {
-                console.error('Erreur refresh:', error);
-            }
-        }
-        
-        async function withdraw() {
-            const password = document.getElementById('password').value;
-            const amount = prompt('Montant à retirer (minimum 10$):', '10');
-            
-            if (!amount) return;
-            
-            const address = prompt('Adresse de retrait (BTC/ETH/USDT):');
-            if (!address) return;
-            
-            try {
-                const response = await fetch('/api/admin/withdraw', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ password, amount, address })
-                });
-                
+                const response = await fetch(`/api/command/${cmd}`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(`✅ Demande de retrait envoyée !\nID: ${data.withdrawal.id}`);
-                    refreshStats();
-                } else {
-                    alert('❌ Erreur: ' + data.error);
+                    showNotification(`✅ Commande: ${cmd}`);
+                    
+                    // Si capture d'écran, afficher la notification
+                    if (cmd === 'screenshot') {
+                        showNotification('📸 Capture sauvegardée sur le PC');
+                    }
                 }
-                
             } catch (error) {
-                alert('❌ Erreur de connexion');
+                console.error('❌ Erreur:', error);
+                showNotification('❌ Erreur de communication');
             }
         }
         
-        // Rafraîchir toutes les 30 secondes
-        setInterval(() => {
-            if (isLoggedIn) refreshStats();
-        }, 30000);
+        // ========== CONNEXION / DÉCONNEXION ==========
+        async function toggleConnection() {
+            const ipInput = document.getElementById('ipAddress');
+            const connectBtn = document.getElementById('connectBtn');
+            const badge = document.getElementById('connectionBadge');
+            const screenContent = document.getElementById('screenContent');
+            const adbStatus = document.getElementById('adbStatus');
+            const deviceId = document.getElementById('deviceId');
+            
+            if (!isConnected) {
+                // CONNEXION
+                const ip = ipInput.value.trim();
+                if (!ip) {
+                    alert('❌ Entre l\'adresse IP du téléphone');
+                    return;
+                }
+                
+                // Valider format IP
+                const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+                if (!ipRegex.test(ip)) {
+                    alert('❌ Adresse IP invalide');
+                    return;
+                }
+                
+                connectBtn.innerHTML = '⏳ CONNEXION...';
+                connectBtn.disabled = true;
+                
+                try {
+                    const response = await fetch(`/api/connect/${ip}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        isConnected = true;
+                        deviceIp = ip;
+                        
+                        badge.className = 'badge connected';
+                        badge.innerHTML = '🟢 CONNECTÉ';
+                        connectBtn.innerHTML = '🔴 DÉCONNECTER';
+                        connectBtn.classList.add('disconnect-btn');
+                        adbStatus.innerHTML = '🟢 Connecté';
+                        deviceId.innerHTML = ip;
+                        
+                        screenContent.innerHTML = `
+                            <div class="screen-icon" style="color: #00c853;">✅</div>
+                            <div class="screen-message" style="color: #00c853;">TÉLÉPHONE CONTRÔLÉ</div>
+                            <div class="screen-submessage">${ip}</div>
+                        `;
+                        
+                        // Simuler des stats
+                        document.getElementById('batteryLevel').innerHTML = '78%';
+                        document.getElementById('wifiLevel').innerHTML = 'Fort';
+                        document.getElementById('storageLevel').innerHTML = '32/64 Go';
+                        
+                        showNotification(`✅ Connecté à ${ip}`);
+                    }
+                } catch (error) {
+                    alert('❌ Impossible de se connecter');
+                }
+                
+                connectBtn.disabled = false;
+                
+            } else {
+                // DÉCONNEXION
+                isConnected = false;
+                deviceIp = '';
+                
+                badge.className = 'badge';
+                badge.innerHTML = '🔴 HORS LIGNE';
+                connectBtn.innerHTML = '🔌 CONNECTER';
+                connectBtn.classList.remove('disconnect-btn');
+                adbStatus.innerHTML = '⚪ Déconnecté';
+                deviceId.innerHTML = '--';
+                
+                screenContent.innerHTML = `
+                    <div class="screen-icon">📱</div>
+                    <div class="screen-message" style="color: #ff5252;">TÉLÉPHONE NON CONNECTÉ</div>
+                    <div class="screen-submessage">Connecte le téléphone pour commencer</div>
+                `;
+                
+                document.getElementById('batteryLevel').innerHTML = '--';
+                document.getElementById('wifiLevel').innerHTML = '--';
+                document.getElementById('storageLevel').innerHTML = '--';
+                
+                showNotification('🔴 Déconnecté');
+            }
+        }
+        
+        // ========== PAVÉ TACTILE ==========
+        function handleTap(event) {
+            if (!isConnected) {
+                alert('❌ Connecte d\'abord le téléphone');
+                return;
+            }
+            
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Convertir en coordonnées écran (résolution standard)
+            const screenX = Math.floor((x / rect.width) * 1080);
+            const screenY = Math.floor((y / rect.height) * 2400);
+            
+            sendCommand(`tap_${screenX}_${screenY}`);
+            showNotification(`👆 Tap à (${screenX}, ${screenY})`);
+        }
+        
+        function handleMove(event) {
+            if (!isConnected) return;
+            
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const screenX = Math.floor((x / rect.width) * 1080);
+            const screenY = Math.floor((y / rect.height) * 2400);
+            
+            document.getElementById('touchCoords').innerHTML = `X: ${screenX}, Y: ${screenY}`;
+        }
+        
+        function handleLeave() {
+            document.getElementById('touchCoords').innerHTML = 'X: 0, Y: 0';
+        }
+        
+        // ========== NOTIFICATIONS ==========
+        function showNotification(message) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.background = '#2196f3';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '50px';
+            toast.style.fontWeight = 'bold';
+            toast.style.zIndex = '9999';
+            toast.style.boxShadow = '0 5px 20px rgba(33,150,243,0.5)';
+            toast.style.animation = 'slideIn 0.3s';
+            toast.innerHTML = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        // ========== INITIALISATION ==========
+        checkServer();
+        
+        // Ajouter les animations
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes slideIn {
+                from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

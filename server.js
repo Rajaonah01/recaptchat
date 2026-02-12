@@ -1,302 +1,209 @@
-require('dotenv').config();
 const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
 const path = require('path');
-const rateLimit = require('express-rate-limit');
-const cron = require('node-cron');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 
-// ========== MIDDLEWARE ==========
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Rate limiting - Anti abus
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // 100 requêtes par IP
-});
-app.use('/api/', limiter);
-
-// ========== CONFIGURATION 2CAPTCHA ==========
-const CONFIG = {
-    API_KEY: process.env.CAPTCHA_API_KEY,
-    API_URL: 'https://api.2captcha.com',
-    POLL_INTERVAL: 5000,
-    SOFT_ID: 0
+// ========== STOCKAGE DES TÉLÉPHONES ==========
+let phones = {
+    broken: null,     // Téléphone cassé (serveur)
+    controller: null  // Téléphone contrôleur
 };
 
-// ========== STATISTIQUES DE GAINS ==========
-let earnings = {
-    today: {
-        captchas: 0,
-        amount: 0
-    },
-    yesterday: {
-        captchas: 0,
-        amount: 0
-    },
-    thisWeek: {
-        captchas: 0,
-        amount: 0
-    },
-    thisMonth: {
-        captchas: 0,
-        amount: 0
-    },
-    total: {
-        captchas: 0,
-        amount: 0
-    },
-    lastUpdate: Date.now()
-};
-
-// Historique des paiements
-let paymentHistory = [];
-
-// ========== FONCTIONS 2CAPTCHA ==========
-
-// 1️⃣ Vérifier le solde du compte
-async function getBalance() {
-    try {
-        const response = await axios.post(`${CONFIG.API_URL}/getBalance`, {
-            clientKey: CONFIG.API_KEY
-        });
-        
-        if (response.data.error) {
-            console.error('❌ Erreur solde:', response.data.error);
-            return 0;
-        }
-        
-        return parseFloat(response.data.balance) || 0;
-    } catch (error) {
-        console.error('❌ Erreur API balance:', error.message);
-        return 0;
-    }
-}
-
-// 2️⃣ Envoyer un captcha à résoudre
-async function createCaptchaTask(siteKey, pageUrl) {
-    try {
-        const response = await axios.post(`${CONFIG.API_URL}/createTask`, {
-            clientKey: CONFIG.API_KEY,
-            task: {
-                type: 'NoCaptchaTaskProxyless',
-                websiteURL: pageUrl,
-                websiteKey: siteKey
-            },
-            softId: CONFIG.SOFT_ID
-        });
-
-        if (response.data.error) {
-            console.error('❌ Erreur création:', response.data.error);
-            return null;
-        }
-
-        return response.data.taskId;
-    } catch (error) {
-        console.error('❌ Erreur API createTask:', error.message);
-        return null;
-    }
-}
-
-// 3️⃣ Récupérer le résultat du captcha
-async function getTaskResult(taskId) {
-    try {
-        const response = await axios.post(`${CONFIG.API_URL}/getTaskResult`, {
-            clientKey: CONFIG.API_KEY,
-            taskId: taskId
-        });
-
-        if (response.data.error) {
-            return { status: 'error', error: response.data.error };
-        }
-
-        if (response.data.status === 'ready') {
-            return { 
-                status: 'ready', 
-                solution: response.data.solution.gRecaptchaResponse 
-            };
-        }
-
-        return { status: 'processing' };
-    } catch (error) {
-        console.error('❌ Erreur récupération:', error.message);
-        return { status: 'error', error: error.message };
-    }
-}
-
-// 4️⃣ Ajouter des gains
-function addEarnings(captchaCount = 1) {
-    // Tarif: 0.5$ pour 1000 captchas = 0.0005$ par captcha
-    const RATE_PER_CAPTCHA = 0.0005;
-    const amount = captchaCount * RATE_PER_CAPTCHA;
-    
-    const now = new Date();
-    const today = now.toDateString();
-    const week = getWeekNumber(now);
-    const month = now.getMonth();
-    
-    // Mise à jour des stats
-    earnings.today.captchas += captchaCount;
-    earnings.today.amount += amount;
-    
-    earnings.thisWeek.captchas += captchaCount;
-    earnings.thisWeek.amount += amount;
-    
-    earnings.thisMonth.captchas += captchaCount;
-    earnings.thisMonth.amount += amount;
-    
-    earnings.total.captchas += captchaCount;
-    earnings.total.amount += amount;
-    
-    earnings.lastUpdate = Date.now();
-    
-    console.log(`💰 GAGNÉ: ${amount.toFixed(4)}$ (${captchaCount} captcha${captchaCount > 1 ? 's' : ''})`);
-    console.log(`📊 Total aujourd'hui: ${earnings.today.amount.toFixed(4)}$`);
-    
-    return amount;
-}
-
-// Utilitaire: numéro de semaine
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
-// Reset quotidien (à minuit)
-cron.schedule('0 0 * * *', () => {
-    earnings.yesterday = { ...earnings.today };
-    earnings.today = { captchas: 0, amount: 0 };
-    console.log('📅 Stats quotidiennes réinitialisées');
+// ========== DÉTECTION AUTOMATIQUE D'IP ==========
+app.get('/api/my-ip', (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    res.json({ 
+        ip: ip.replace('::ffff:', ''),
+        timestamp: Date.now()
+    });
 });
 
-// ========== ROUTES API ==========
+// ========== SOCKET.IO - COMMUNICATION DIRECTE ==========
+io.on('connection', (socket) => {
+    console.log(`📱 Nouvelle connexion: ${socket.id}`);
+    const clientIp = socket.handshake.address.replace('::ffff:', '');
+    console.log(`📍 IP: ${clientIp}`);
+    
+    // ===== ENREGISTREMENT DU TÉLÉPHONE CASSÉ =====
+    socket.on('register-broken', (data) => {
+        phones.broken = {
+            id: socket.id,
+            ip: clientIp,
+            device: data.device || 'Téléphone cassé',
+            lastSeen: Date.now()
+        };
+        
+        console.log('✅ TÉLÉPHONE CASSÉ ENREGISTRÉ !');
+        console.log(`   📱 IP: ${clientIp}`);
+        
+        // Notifier tous les contrôleurs
+        io.emit('broken-phone-status', {
+            connected: true,
+            ip: clientIp,
+            device: phones.broken.device,
+            timestamp: Date.now()
+        });
+        
+        socket.emit('registered', { 
+            success: true, 
+            role: 'broken',
+            ip: clientIp
+        });
+    });
+    
+    // ===== ENREGISTREMENT DU TÉLÉPHONE CONTRÔLEUR =====
+    socket.on('register-controller', (data) => {
+        phones.controller = {
+            id: socket.id,
+            ip: clientIp,
+            device: data.device || 'Contrôleur',
+            lastSeen: Date.now()
+        };
+        
+        console.log('✅ TÉLÉPHONE CONTRÔLEUR ENREGISTRÉ !');
+        
+        // Envoyer immédiatement l'IP du téléphone cassé si disponible
+        if (phones.broken) {
+            socket.emit('broken-phone-status', {
+                connected: true,
+                ip: phones.broken.ip,
+                device: phones.broken.device,
+                timestamp: Date.now()
+            });
+        }
+        
+        socket.emit('registered', { 
+            success: true, 
+            role: 'controller'
+        });
+    });
+    
+    // ===== COMMANDE DU CONTRÔLEUR VERS LE CASSÉ =====
+    socket.on('command', (data) => {
+        console.log(`📱 Commande reçue: ${data.cmd}`);
+        
+        // Transmettre au téléphone cassé
+        if (phones.broken) {
+            io.to(phones.broken.id).emit('execute-command', {
+                cmd: data.cmd,
+                timestamp: Date.now()
+            });
+            
+            socket.emit('command-sent', {
+                success: true,
+                cmd: data.cmd
+            });
+        } else {
+            socket.emit('command-sent', {
+                success: false,
+                error: 'Téléphone cassé non connecté'
+            });
+        }
+    });
+    
+    // ===== RÉPONSE DU TÉLÉPHONE CASSÉ =====
+    socket.on('command-result', (data) => {
+        if (phones.controller) {
+            io.to(phones.controller.id).emit('command-response', {
+                cmd: data.cmd,
+                result: data.result,
+                timestamp: Date.now()
+            });
+        }
+    });
+    
+    // ===== CAPTURE D'ÉCRAN =====
+    socket.on('screenshot', (data) => {
+        console.log('📸 Capture d\'écran reçue');
+        if (phones.controller) {
+            io.to(phones.controller.id).emit('screenshot-data', {
+                image: data.image,
+                timestamp: Date.now()
+            });
+        }
+    });
+    
+    // ===== STATUT BATTERIE =====
+    socket.on('battery-status', (data) => {
+        if (phones.controller) {
+            io.to(phones.controller.id).emit('battery-update', {
+                level: data.level,
+                charging: data.charging,
+                timestamp: Date.now()
+            });
+        }
+    });
+    
+    // ===== DÉCONNEXION =====
+    socket.on('disconnect', () => {
+        console.log(`❌ Déconnecté: ${socket.id}`);
+        
+        if (phones.broken && phones.broken.id === socket.id) {
+            phones.broken = null;
+            io.emit('broken-phone-status', { 
+                connected: false,
+                timestamp: Date.now()
+            });
+            console.log('📱 Téléphone cassé déconnecté');
+        }
+        
+        if (phones.controller && phones.controller.id === socket.id) {
+            phones.controller = null;
+            console.log('🎮 Contrôleur déconnecté');
+        }
+    });
+});
 
-// 1️⃣ PAGE PRINCIPALE - Les visiteurs résolvent des captchas
+// ========== API POUR VÉRIFIER LE STATUT ==========
+app.get('/api/status', (req, res) => {
+    res.json({
+        broken: phones.broken ? {
+            connected: true,
+            ip: phones.broken.ip,
+            device: phones.broken.device,
+            lastSeen: phones.broken.lastSeen
+        } : { connected: false },
+        controller: phones.controller ? {
+            connected: true,
+            device: phones.controller.device
+        } : { connected: false },
+        timestamp: Date.now()
+    });
+});
+
+// ========== PAGE PRINCIPALE ==========
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 2️⃣ DASHBOARD - Pour voir tes gains
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
-// 3️⃣ API: Soumettre un captcha (APPELÉ PAR TES VISITEURS)
-app.post('/api/captcha/submit', async (req, res) => {
-    const { token, siteKey, pageUrl } = req.body;
-    
-    if (!token) {
-        return res.status(400).json({ success: false, error: 'Token manquant' });
-    }
-    
-    try {
-        // Créer la tâche sur 2captcha
-        const taskId = await createCaptchaTask(
-            siteKey || '6LfJ7bIUAAAAAHqUy2jB3TqYJpLhXqHqZqHqZ',
-            pageUrl || req.headers.referer || 'https://ton-site.com'
-        );
-        
-        if (!taskId) {
-            return res.json({ success: false, error: 'Erreur création tâche' });
-        }
-        
-        // Attendre le résultat
-        let result = { status: 'processing' };
-        let attempts = 0;
-        
-        while (result.status === 'processing' && attempts < 30) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            result = await getTaskResult(taskId);
-            attempts++;
-        }
-        
-        if (result.status === 'ready') {
-            // ✅ TU GAGNES DE L'ARGENT !
-            addEarnings(1);
-            
-            res.json({
-                success: true,
-                solution: result.solution
-            });
-        } else {
-            res.json({
-                success: false,
-                error: 'Timeout ou erreur'
-            });
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur soumission:', error);
-        res.status(500).json({ success: false, error: 'Erreur serveur' });
-    }
-});
-
-// 4️⃣ API: Obtenir les stats (protégé par mot de passe)
-app.post('/api/admin/stats', async (req, res) => {
-    const { password } = req.body;
-    
-    if (password !== process.env.ADMIN_PASSWORD) {
-        return res.status(401).json({ error: 'Non autorisé' });
-    }
-    
-    const balance = await getBalance();
-    
-    res.json({
-        earnings,
-        balance: balance.toFixed(4),
-        paymentHistory,
-        server: {
-            uptime: process.uptime(),
-            memory: process.memoryUsage(),
-            timestamp: Date.now()
-        }
-    });
-});
-
-// 5️⃣ API: Effectuer un retrait
-app.post('/api/admin/withdraw', async (req, res) => {
-    const { password, amount, address } = req.body;
-    
-    if (password !== process.env.ADMIN_PASSWORD) {
-        return res.status(401).json({ error: 'Non autorisé' });
-    }
-    
-    // Simulation de retrait (dans la vraie vie, API 2captcha withdraw)
-    const withdrawal = {
-        id: `WITHDRAW_${Date.now()}`,
-        amount: parseFloat(amount),
-        address: address,
-        timestamp: Date.now(),
-        status: 'pending'
-    };
-    
-    paymentHistory.push(withdrawal);
-    
-    res.json({
-        success: true,
-        withdrawal
-    });
-});
-
 // ========== DÉMARRAGE ==========
-app.listen(PORT, '0.0.0.0', async () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log('\n' + '='.repeat(70));
-    console.log('💰💰💰 FERME DE CAPTCHA - MODE GAINS 💰💰💰');
+    console.log('📱📱📱 CONTRÔLE DIRECT - AUTO IP 📱📱📱');
     console.log('='.repeat(70));
-    console.log(`📡 URL: http://localhost:${PORT}`);
-    console.log(`🔑 API Key: ${CONFIG.API_KEY.slice(0,8)}...`);
-    
-    const balance = await getBalance();
-    console.log(`💰 Solde 2captcha: ${balance.toFixed(4)}$`);
-    
-    console.log('\n📊 TARIF: 0.0005$ PAR CAPTCHA');
-    console.log('🎯 1000 captchas = 0.50$ POUR TOI !');
-    console.log('='.repeat(70) + '\n');
+    console.log(`\n🌍 URL: https://controle-direct.onrender.com`);
+    console.log(`\n🎯 MODE D'EMPLOI:`);
+    console.log(`   1️⃣ Ouvre cette URL sur le TÉLÉPHONE CASSÉ`);
+    console.log(`   2️⃣ Clique "JE SUIS LE TÉLÉPHONE CASSÉ"`);
+    console.log(`   3️⃣ Ouvre la MÊME URL sur le TÉLÉPHONE SAIN`);
+    console.log(`   4️⃣ Clique "JE SUIS LE CONTRÔLEUR"`);
+    console.log(`   5️⃣ 🎉 CONNEXION AUTOMATIQUE !`);
+    console.log('\n' + '='.repeat(70) + '\n');
 });

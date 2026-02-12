@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔒 Vérification de sécurité</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📱 CONTRÔLE TÉLÉPHONE CASSÉ - AUTO IP</title>
     <style>
         * {
             margin: 0;
@@ -12,191 +12,478 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(145deg, #0f0c1f, #1a1a2e);
+            color: white;
             min-height: 100vh;
+            padding: 16px;
             display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 20px;
+            align-items: center;
         }
         
         .container {
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2em;
+        /* MODE SÉLECTION */
+        .mode-selection {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
         }
         
-        .captcha-container {
-            background: #f0f2f5;
-            border-radius: 10px;
+        .mode-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
             padding: 20px;
-            margin: 20px 0;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1em;
+            gap: 10px;
             cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s;
+            transition: all 0.3s;
         }
         
-        .btn:hover {
-            transform: translateY(-2px);
+        .mode-btn.active {
+            background: rgba(0,200,83,0.2);
+            border-color: #00c853;
+            transform: scale(1.02);
         }
         
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .mode-btn.broken.active {
+            background: rgba(255,82,82,0.2);
+            border-color: #ff5252;
         }
         
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
+        .mode-icon {
+            font-size: 2.5rem;
+        }
+        
+        /* STATUT CONNEXION */
+        .status-card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid;
+            transition: all 0.3s;
+        }
+        
+        .status-broken {
+            border-color: #ff5252;
+        }
+        
+        .status-controller {
+            border-color: #00c853;
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .badge-red { background: #ff5252; color: white; }
+        .badge-green { background: #00c853; color: white; }
+        .badge-blue { background: #2196f3; color: white; }
+        .badge-yellow { background: #ffd700; color: black; }
+        
+        /* IP DÉTECTÉE */
+        .ip-display {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 20px;
             text-align: center;
+            margin: 20px 0;
+            border: 1px dashed #ffd700;
+        }
+        
+        .ip-address {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        
+        /* BOUTONS DE CONTRÔLE */
+        .control-panel {
             display: none;
         }
         
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .control-panel.active {
+            display: block;
         }
         
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
         }
         
-        .info {
-            background: #e2f3ff;
-            color: #004085;
-            border: 1px solid #b8daff;
-            margin-bottom: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 0.95em;
+        .btn {
+            background: #2a2a3a;
+            border: none;
+            color: white;
+            padding: 18px 0;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            background: #3a3a4a;
+        }
+        
+        .btn-icon { font-size: 1.8rem; }
+        .btn-label { font-size: 0.75rem; }
+        
+        .btn-green { background: #00c853; }
+        .btn-blue { background: #2196f3; }
+        .btn-yellow { background: #ffd700; color: black; }
+        .btn-red { background: #ff5252; }
+        .btn-purple { background: #9c27b0; }
+        
+        /* CAPTURE ÉCRAN */
+        .screenshot-area {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .screenshot-img {
+            width: 100%;
+            border-radius: 16px;
+            border: 2px solid #ffd700;
+        }
+        
+        /* NOTIFICATION */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2196f3;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
         
         .footer {
             margin-top: 30px;
             text-align: center;
             color: #666;
-            font-size: 0.8em;
-        }
-        
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-            font-size: 0.9em;
+            font-size: 0.7rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 VÉRIFICATION ANTI-BOT</h1>
         
-        <div class="info">
-            ⚡ Ce site utilise reCAPTCHA pour se protéger contre les robots.
-            Veuillez compléter la vérification pour continuer.
+        <!-- ===== SÉLECTION DU MODE ===== -->
+        <div class="mode-selection">
+            <div id="modeBrokenBtn" class="mode-btn broken" onclick="setMode('broken')">
+                <span class="mode-icon">📱</span>
+                <span>JE SUIS LE</span>
+                <span style="font-size: 1.2rem; color: #ff5252;">TÉLÉPHONE CASSÉ</span>
+            </div>
+            <div id="modeControllerBtn" class="mode-btn" onclick="setMode('controller')">
+                <span class="mode-icon">🎮</span>
+                <span>JE SUIS LE</span>
+                <span style="font-size: 1.2rem; color: #00c853;">CONTRÔLEUR</span>
+            </div>
         </div>
         
-        <div class="captcha-container">
-            <div class="g-recaptcha" data-sitekey="6LfJ7bIUAAAAAHqUy2jB3TqYJpLhXqHqZqHqZ"></div>
+        <!-- ===== STATUT CONNEXION ===== -->
+        <div id="statusCard" class="status-card">
+            <div class="status-header">
+                <span id="statusTitle" style="font-size: 1.3rem; font-weight: bold;">🔴 MODE NON SÉLECTIONNÉ</span>
+                <span id="connectionBadge" class="badge badge-red">DÉCONNECTÉ</span>
+            </div>
+            
+            <!-- IP AUTO DÉTECTÉE -->
+            <div id="ipDisplay" class="ip-display">
+                <div style="color: #a0a0a0; margin-bottom: 5px;">📍 ADRESSE IP DÉTECTÉE</div>
+                <div id="ipAddress" class="ip-address">0.0.0.0</div>
+                <div id="deviceInfo" style="margin-top: 10px; color: #a0a0a0; font-size: 0.9rem;"></div>
+            </div>
+            
+            <div id="connectionStatus" style="text-align: center; color: #a0a0a0;">
+                Prêt à connecter...
+            </div>
         </div>
         
-        <button class="btn" onclick="verifyCaptcha()" id="verifyBtn">
-            ✅ VÉRIFIER
-        </button>
+        <!-- ===== PANNEAU DE CONTRÔLE (POUR CONTRÔLEUR) ===== -->
+        <div id="controlPanel" class="control-panel">
+            
+            <!-- INFOS TÉLÉPHONE CASSÉ -->
+            <div style="background: rgba(33,150,243,0.1); border-radius: 16px; padding: 15px; margin-bottom: 20px; border: 1px solid #2196f3;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📱 Téléphone cassé:</span>
+                    <span id="brokenPhoneIP" style="color: #ffd700; font-weight: bold;">Non connecté</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span>🔋 Batterie:</span>
+                    <span id="batteryLevel" style="color: #00ff88;">--</span>
+                </div>
+            </div>
+            
+            <!-- BOUTONS DE CONTRÔLE -->
+            <div class="button-grid">
+                <button class="btn" onclick="sendCommand('volume_up')">
+                    <span class="btn-icon">🔊</span>
+                    <span class="btn-label">Volume +</span>
+                </button>
+                <button class="btn" onclick="sendCommand('volume_down')">
+                    <span class="btn-icon">🔉</span>
+                    <span class="btn-label">Volume -</span>
+                </button>
+                <button class="btn btn-yellow" onclick="sendCommand('wakeup')">
+                    <span class="btn-icon">⏻</span>
+                    <span class="btn-label">Réveiller</span>
+                </button>
+                
+                <button class="btn btn-blue" onclick="sendCommand('home')">
+                    <span class="btn-icon">🏠</span>
+                    <span class="btn-label">Accueil</span>
+                </button>
+                <button class="btn btn-blue" onclick="sendCommand('back')">
+                    <span class="btn-icon">🔙</span>
+                    <span class="btn-label">Retour</span>
+                </button>
+                <button class="btn btn-blue" onclick="sendCommand('recent')">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-label">Récents</span>
+                </button>
+                
+                <button class="btn" onclick="sendCommand('swipe_up')">
+                    <span class="btn-icon">⬆️</span>
+                    <span class="btn-label">Swipe Up</span>
+                </button>
+                <button class="btn" onclick="sendCommand('swipe_down')">
+                    <span class="btn-icon">⬇️</span>
+                    <span class="btn-label">Swipe Down</span>
+                </button>
+                <button class="btn btn-green" onclick="sendCommand('screenshot')">
+                    <span class="btn-icon">📸</span>
+                    <span class="btn-label">Capture</span>
+                </button>
+            </div>
+            
+            <!-- APERÇU CAPTURE -->
+            <div id="screenshotContainer" class="screenshot-area">
+                <h4 style="color: #ffd700; margin-bottom: 10px;">📸 Dernière capture</h4>
+                <img id="screenshotImg" class="screenshot-img" src="" alt="Capture écran">
+            </div>
+        </div>
         
-        <div id="status" class="status"></div>
-        
-        <div class="stats">
-            <span>🛡️ Protection active</span>
-            <span>⚡ Temps réel</span>
+        <!-- ===== PANNEAU TÉLÉPHONE CASSÉ ===== -->
+        <div id="brokenPanel" style="display: none; text-align: center; padding: 30px; background: rgba(255,82,82,0.1); border-radius: 30px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📱</div>
+            <h2 style="color: #ff5252; margin-bottom: 15px;">TÉLÉPHONE CASSÉ</h2>
+            <p style="color: #a0a0a0; margin-bottom: 25px;">Mode serveur activé - En attente de commandes</p>
+            <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 20px;">
+                <div style="color: #ffd700; margin-bottom: 10px;">📍 TON IP:</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #ffd700;" id="brokenIPDisplay">0.0.0.0</div>
+            </div>
         </div>
         
         <div class="footer">
-            © 2026 - Tous droits réservés
+            ⚡ AUTO IP • CONNEXION DIRECTE • AUCUN PC REQUIS
         </div>
     </div>
 
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
-        async function verifyCaptcha() {
-            const token = document.querySelector('[name="g-recaptcha-response"]')?.value;
-            const btn = document.getElementById('verifyBtn');
-            const status = document.getElementById('status');
+        // ========== CONFIGURATION ==========
+        const socket = io();
+        let currentMode = null;
+        let isBrokenConnected = false;
+        
+        // ========== DÉTECTION AUTOMATIQUE D'IP ==========
+        async function detectMyIP() {
+            try {
+                const response = await fetch('/api/my-ip');
+                const data = await response.json();
+                document.getElementById('ipAddress').innerHTML = data.ip;
+                document.getElementById('brokenIPDisplay').innerHTML = data.ip;
+                return data.ip;
+            } catch (error) {
+                console.error('Erreur IP:', error);
+                return '0.0.0.0';
+            }
+        }
+        
+        // ========== CHANGEMENT DE MODE ==========
+        function setMode(mode) {
+            currentMode = mode;
             
-            if (!token) {
-                status.style.display = 'block';
-                status.className = 'status error';
-                status.innerHTML = '❌ Veuillez compléter le captcha';
+            // UI - Boutons
+            document.getElementById('modeBrokenBtn').classList.remove('active');
+            document.getElementById('modeControllerBtn').classList.remove('active');
+            
+            if (mode === 'broken') {
+                document.getElementById('modeBrokenBtn').classList.add('active');
+                document.getElementById('statusCard').className = 'status-card status-broken';
+                document.getElementById('statusTitle').innerHTML = '🔴 MODE TÉLÉPHONE CASSÉ';
+                document.getElementById('connectionBadge').innerHTML = 'ATTENTE...';
+                document.getElementById('connectionBadge').className = 'badge badge-yellow';
+                document.getElementById('brokenPanel').style.display = 'block';
+                document.getElementById('controlPanel').style.display = 'none';
+                
+                // Enregistrer comme téléphone cassé
+                socket.emit('register-broken', {
+                    device: navigator.userAgent
+                });
+                
+                showNotification('📱 Mode téléphone cassé activé');
+                
+            } else {
+                document.getElementById('modeControllerBtn').classList.add('active');
+                document.getElementById('statusCard').className = 'status-card status-controller';
+                document.getElementById('statusTitle').innerHTML = '🟢 MODE CONTRÔLEUR';
+                document.getElementById('connectionBadge').innerHTML = 'RECHERCHE...';
+                document.getElementById('connectionBadge').className = 'badge badge-blue';
+                document.getElementById('brokenPanel').style.display = 'none';
+                document.getElementById('controlPanel').style.display = 'block';
+                
+                // Enregistrer comme contrôleur
+                socket.emit('register-controller', {
+                    device: navigator.userAgent
+                });
+                
+                showNotification('🎮 Mode contrôleur activé');
+            }
+        }
+        
+        // ========== SOCKET.IO ==========
+        socket.on('connect', () => {
+            console.log('✅ Connecté au serveur');
+            detectMyIP();
+        });
+        
+        // Enregistrement réussi
+        socket.on('registered', (data) => {
+            console.log('✅ Enregistrement réussi:', data);
+            
+            if (data.role === 'broken') {
+                document.getElementById('connectionBadge').innerHTML = 'CONNECTÉ';
+                document.getElementById('connectionBadge').className = 'badge badge-red';
+                document.getElementById('connectionStatus').innerHTML = '✅ Prêt à recevoir des commandes';
+            }
+        });
+        
+        // Statut du téléphone cassé (pour contrôleur)
+        socket.on('broken-phone-status', (data) => {
+            isBrokenConnected = data.connected;
+            
+            if (data.connected) {
+                document.getElementById('connectionBadge').innerHTML = 'CONNECTÉ';
+                document.getElementById('connectionBadge').className = 'badge badge-green';
+                document.getElementById('connectionStatus').innerHTML = `✅ Connecté au téléphone cassé`;
+                document.getElementById('brokenPhoneIP').innerHTML = data.ip || 'Connecté';
+                document.getElementById('brokenPhoneIP').style.color = '#00ff88';
+            } else {
+                document.getElementById('connectionBadge').innerHTML = 'DÉCONNECTÉ';
+                document.getElementById('connectionBadge').className = 'badge badge-red';
+                document.getElementById('connectionStatus').innerHTML = '❌ Téléphone cassé non connecté';
+                document.getElementById('brokenPhoneIP').innerHTML = 'Non connecté';
+                document.getElementById('brokenPhoneIP').style.color = '#ff5252';
+            }
+        });
+        
+        // Recevoir une commande (pour téléphone cassé)
+        socket.on('execute-command', (data) => {
+            console.log('📱 Commande à exécuter:', data.cmd);
+            showNotification(`📱 Commande: ${data.cmd}`);
+            
+            // Simuler l'exécution
+            setTimeout(() => {
+                socket.emit('command-result', {
+                    cmd: data.cmd,
+                    result: 'success'
+                });
+            }, 500);
+        });
+        
+        // Confirmation de commande envoyée (pour contrôleur)
+        socket.on('command-sent', (data) => {
+            if (data.success) {
+                showNotification(`✅ Commande envoyée: ${data.cmd}`);
+            } else {
+                showNotification(`❌ ${data.error}`);
+            }
+        });
+        
+        // Recevoir une capture d'écran (pour contrôleur)
+        socket.on('screenshot-data', (data) => {
+            document.getElementById('screenshotContainer').style.display = 'block';
+            document.getElementById('screenshotImg').src = data.image;
+            showNotification('📸 Capture d\'écran reçue');
+        });
+        
+        // ========== ENVOYER UNE COMMANDE (CONTRÔLEUR) ==========
+        function sendCommand(cmd) {
+            if (!isBrokenConnected) {
+                alert('❌ Téléphone cassé non connecté !');
                 return;
             }
             
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Vérification en cours...';
-            
-            status.style.display = 'block';
-            status.className = 'status info';
-            status.innerHTML = '⏳ Traitement de votre demande...';
-            
-            try {
-                const response = await fetch('/api/captcha/submit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ token })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    status.className = 'status success';
-                    status.innerHTML = '✅ Vérification réussie ! Vous pouvez continuer.';
-                    
-                    // Redirection après 2 secondes
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 2000);
-                } else {
-                    throw new Error(data.error || 'Erreur de vérification');
-                }
-                
-            } catch (error) {
-                status.className = 'status error';
-                status.innerHTML = '❌ Erreur: ' + error.message;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '✅ VÉRIFIER';
-            }
+            socket.emit('command', { cmd });
         }
+        
+        // ========== NOTIFICATIONS ==========
+        function showNotification(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        // ========== SIMULATION BATTERIE (pour test) ==========
+        setInterval(() => {
+            if (currentMode === 'broken') {
+                const level = Math.floor(Math.random() * 30) + 70; // 70-100%
+                socket.emit('battery-status', {
+                    level: level + '%',
+                    charging: true
+                });
+            }
+        }, 10000);
+        
+        // ========== DÉTECTION IP AU CHARGEMENT ==========
+        detectMyIP();
+        setInterval(detectMyIP, 30000); // Rafraîchir IP toutes les 30s
     </script>
 </body>
 </html>
