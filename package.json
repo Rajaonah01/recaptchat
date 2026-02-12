@@ -1,7 +1,7 @@
 {
-  "name": "controle-direct",
+  "name": "controle-total",
   "version": "1.0.0",
-  "description": "Contrôle téléphone cassé - Connexion directe auto IP",
+  "description": "Accès total - Partage d'écran et contrôle complet",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
