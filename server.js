@@ -9,6 +9,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ========== CONFIGURATION PROXY (INDISPENSABLE POUR RENDER) ==========
+// ✅ Cette ligne résout l'erreur ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// Elle indique à Express de faire confiance au premier proxy (Render)
+app.set('trust proxy', 1);
+
 // ========== SÉCURITÉ ==========
 app.use(helmet({
     contentSecurityPolicy: {
@@ -23,23 +28,31 @@ app.use(helmet({
     },
 }));
 
+// Configuration CORS plus flexible pour Render
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://ton-app.render.com', 'https://*.onrender.com'] 
+        ? [/\.onrender\.com$/, 'https://ton-app.render.com'] // Accepte tous les sous-domaines onrender.com
         : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
 }));
 
-// ========== RATE LIMITING ==========
+// ========== RATE LIMITING - AVEC GESTION DES ERREURS ==========
 const limiter = rateLimit({
-    windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
-    max: process.env.RATE_LIMIT_MAX || 100,
+    windowMs: (parseInt(process.env.RATE_LIMIT_WINDOW) || 15) * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
     message: { 
         success: false, 
         error: '⚠️ Trop de requêtes, veuillez réessayer plus tard.' 
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // ✅ Désactiver les validations qui causent des erreurs sur Render
+    validate: {
+        xForwardedForHeader: false,  // Désactive la validation de l'en-tête X-Forwarded-For
+        trustProxy: false,           // Désactive la validation du trust proxy
+        ip: false,                   // Désactive la validation IP
+        default: true                 // Garde les autres validations actives
+    }
 });
 
 app.use('/api/', limiter);
@@ -71,6 +84,7 @@ setInterval(() => {
 // ========== FONCTIONS UTILITAIRES ==========
 
 function isValidIP(ip) {
+    if (!ip) return false;
     const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
     return ipv4Regex.test(ip) || ipv6Regex.test(ip);
@@ -78,7 +92,9 @@ function isValidIP(ip) {
 
 function cleanIP(ip) {
     if (!ip) return null;
+    // Enlever le port si présent
     ip = ip.split(':')[0];
+    // Nettoyer IPv6 mappé
     if (ip.startsWith('::ffff:')) {
         ip = ip.substring(7);
     }
@@ -86,9 +102,17 @@ function cleanIP(ip) {
 }
 
 function getClientIP(req) {
+    // Priorité 1: Cloudflare
     const cfIP = req.headers['cf-connecting-ip'];
     if (cfIP && isValidIP(cleanIP(cfIP))) return cleanIP(cfIP);
     
+    // Priorité 2: X-Forwarded-For (grâce à trust proxy)
+    // Express va automatiquement utiliser req.ip grâce à trust proxy
+    if (req.ip && isValidIP(cleanIP(req.ip))) {
+        return cleanIP(req.ip);
+    }
+    
+    // Priorité 3: Traitement manuel du header X-Forwarded-For
     const xff = req.headers['x-forwarded-for'];
     if (xff) {
         const ips = xff.split(',').map(ip => cleanIP(ip.trim()));
@@ -97,6 +121,7 @@ function getClientIP(req) {
         }
     }
     
+    // Priorité 4: Remote address
     const remoteIP = req.socket.remoteAddress;
     if (remoteIP) {
         const clean = cleanIP(remoteIP);
@@ -176,6 +201,10 @@ async function getIPInfo(ip = null) {
         if (error.response?.status === 429) {
             throw new Error('Trop de requêtes, veuillez réessayer plus tard');
         }
+        if (error.response?.status === 403) {
+            console.error('🔑 Token IPinfo invalide ou expiré');
+            throw new Error('Token API invalide. Vérifie ton token IPinfo');
+        }
         
         throw new Error(`Erreur de géolocalisation: ${error.message}`);
     }
@@ -189,6 +218,7 @@ app.get('/api/status', (req, res) => {
         timestamp: Date.now(),
         uptime: process.uptime(),
         env: process.env.NODE_ENV || 'development',
+        trustProxy: app.get('trust proxy'), // Affiche la configuration proxy
         cache: {
             size: cache.size,
             maxAge: `${CACHE_DURATION / 3600000}h`
@@ -199,11 +229,12 @@ app.get('/api/status', (req, res) => {
 app.get('/api/myip', (req, res) => {
     const clientIP = getClientIP(req);
     res.json({
+        success: true,
         ip: clientIP || req.socket.remoteAddress,
-        clean: clientIP,
-        headers: {
-            'cf-connecting-ip': req.headers['cf-connecting-ip'] || null,
-            'x-forwarded-for': req.headers['x-forwarded-for'] || null
+        raw: {
+            'req.ip': req.ip,
+            'x-forwarded-for': req.headers['x-forwarded-for'] || null,
+            'remoteAddress': req.socket.remoteAddress
         }
     });
 });
@@ -326,13 +357,13 @@ app.use((err, req, res, next) => {
 
 // ========== DÉMARRAGE DU SERVEUR ==========
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('\n' + '='.repeat(60));
-    console.log('📍 SERVEUR DE LOCALISATION IP');
-    console.log('='.repeat(60));
+    console.log('\n' + '='.repeat(70));
+    console.log('📍 SERVEUR DE LOCALISATION IP - CORRIGÉ POUR RENDER');
+    console.log('='.repeat(70));
     console.log(`\n📡 URL: http://localhost:${PORT}`);
     console.log(`🔑 Token IPinfo: ${IPINFO_TOKEN.slice(0,8)}...`);
-    console.log(`💾 Cache: ${CACHE_DURATION / 3600000}h`);
     console.log(`🛡️ Rate Limit: ${process.env.RATE_LIMIT_MAX || 100}/${process.env.RATE_LIMIT_WINDOW || 15}min`);
     console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-    console.log('\n' + '='.repeat(60) + '\n');
+    console.log(`✅ Trust Proxy: ${app.get('trust proxy')}`);
+    console.log('\n' + '='.repeat(70) + '\n');
 });
