@@ -25,7 +25,7 @@ app.use(helmet({
 
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://ton-domaine.com'] 
+        ? ['https://ton-app.render.com', 'https://*.onrender.com'] 
         : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
 }));
@@ -34,7 +34,10 @@ app.use(cors({
 const limiter = rateLimit({
     windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
     max: process.env.RATE_LIMIT_MAX || 100,
-    message: '⚠️ Trop de requêtes, veuillez réessayer plus tard.',
+    message: { 
+        success: false, 
+        error: '⚠️ Trop de requêtes, veuillez réessayer plus tard.' 
+    },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -49,44 +52,40 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ========== CONFIGURATION IPINFO ==========
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '1bf43b15c3f17f';
 const IPINFO_API = 'https://ipinfo.io';
+const CACHE_DURATION = parseInt(process.env.CACHE_DURATION) || 3600000; // 1 heure
 
-// Cache en mémoire (pour éviter de surcharger l'API)
+// Cache en mémoire
 const cache = new Map();
-const CACHE_DURATION = 3600000; // 1 heure
+
+// Nettoyage périodique du cache (toutes les heures)
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of cache.entries()) {
+        if (now - value.timestamp > CACHE_DURATION) {
+            cache.delete(key);
+        }
+    }
+    console.log(`🧹 Cache nettoyé: ${cache.size} entrées restantes`);
+}, CACHE_DURATION);
 
 // ========== FONCTIONS UTILITAIRES ==========
 
-/**
- * Valide une adresse IP (IPv4 et IPv6)
- */
 function isValidIP(ip) {
     const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
     return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
-/**
- * Nettoie l'adresse IP (enlève le port, IPv6 mapped, etc.)
- */
 function cleanIP(ip) {
     if (!ip) return null;
-    
-    // Enlever le port si présent
     ip = ip.split(':')[0];
-    
-    // Enlever le préfixe IPv6 mapped
     if (ip.startsWith('::ffff:')) {
         ip = ip.substring(7);
     }
-    
     return ip;
 }
 
-/**
- * Récupère l'IP réelle du client
- */
 function getClientIP(req) {
-    // Priorité : Cloudflare, Proxy, X-Forwarded-For, Remote Address
     const cfIP = req.headers['cf-connecting-ip'];
     if (cfIP && isValidIP(cleanIP(cfIP))) return cleanIP(cfIP);
     
@@ -107,13 +106,11 @@ function getClientIP(req) {
     return null;
 }
 
-/**
- * Récupère les informations de géolocalisation depuis IPinfo
- */
 async function getIPInfo(ip = null) {
     try {
-        // Vérifier le cache
         const cacheKey = ip || 'self';
+        
+        // Vérifier le cache
         if (cache.has(cacheKey)) {
             const cached = cache.get(cacheKey);
             if (Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -131,7 +128,7 @@ async function getIPInfo(ip = null) {
         console.log(`🌍 Requête IPinfo pour: ${ip || 'self'}`);
         
         const response = await axios.get(url, {
-            timeout: 5000,
+            timeout: 10000,
             headers: {
                 'Accept': 'application/json',
                 'User-Agent': 'IP-Localisateur/1.0'
@@ -142,7 +139,6 @@ async function getIPInfo(ip = null) {
             throw new Error('Réponse vide de l\'API');
         }
 
-        // Structurer les données
         const data = {
             ip: response.data.ip || ip || 'Inconnu',
             hostname: response.data.hostname || null,
@@ -187,10 +183,6 @@ async function getIPInfo(ip = null) {
 
 // ========== ROUTES API ==========
 
-/**
- * GET /api/status
- * Vérification du statut du serveur
- */
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'online',
@@ -204,10 +196,6 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-/**
- * GET /api/myip
- * Récupère l'IP du client
- */
 app.get('/api/myip', (req, res) => {
     const clientIP = getClientIP(req);
     res.json({
@@ -220,20 +208,14 @@ app.get('/api/myip', (req, res) => {
     });
 });
 
-/**
- * GET /api/locate
- * Localise l'IP fournie ou celle du client
- */
 app.get('/api/locate', async (req, res) => {
     try {
         let ip = req.query.ip;
         
-        // Si aucune IP fournie, prendre celle du client
         if (!ip) {
             ip = getClientIP(req);
         }
 
-        // Valider l'IP si fournie
         if (ip && !isValidIP(ip)) {
             return res.status(400).json({
                 success: false,
@@ -260,10 +242,6 @@ app.get('/api/locate', async (req, res) => {
     }
 });
 
-/**
- * POST /api/locate/batch
- * Localisation multiple d'IPs
- */
 app.post('/api/locate/batch', async (req, res) => {
     const { ips } = req.body;
     
@@ -305,10 +283,6 @@ app.post('/api/locate/batch', async (req, res) => {
     });
 });
 
-/**
- * GET /api/stats
- * Statistiques du serveur
- */
 app.get('/api/stats', (req, res) => {
     const memoryUsage = process.memoryUsage();
     res.json({
@@ -359,11 +333,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔑 Token IPinfo: ${IPINFO_TOKEN.slice(0,8)}...`);
     console.log(`💾 Cache: ${CACHE_DURATION / 3600000}h`);
     console.log(`🛡️ Rate Limit: ${process.env.RATE_LIMIT_MAX || 100}/${process.env.RATE_LIMIT_WINDOW || 15}min`);
-    console.log(`\n📋 Endpoints API:`);
-    console.log(`   GET  /api/status   - Statut du serveur`);
-    console.log(`   GET  /api/myip      - Votre adresse IP`);
-    console.log(`   GET  /api/locate    - Localiser une IP`);
-    console.log(`   POST /api/locate/batch - Localiser plusieurs IPs`);
-    console.log(`   GET  /api/stats     - Statistiques serveur`);
+    console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
     console.log('\n' + '='.repeat(60) + '\n');
 });
