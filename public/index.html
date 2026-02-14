@@ -2,670 +2,611 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>📍 IP LOCALISATEUR • Node.js Backend</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binance Faucet Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --bg: #0b0e11;
+            --card: #181a20;
+            --yellow: #f0b90b;
+            --green: #16c784;
+            --red: #ea3943;
+            --text: #eaecef;
+            --gray: #848e9c;
+        }
+        
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(145deg, #0a0c12 0%, #0f1117 100%);
-            color: #fff;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-
-        .container {
-            max-width: 1300px;
-            width: 100%;
-            background: rgba(15, 20, 30, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: 40px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Header */
-        .header {
+        
+        header {
+            background: #111418;
+            padding: 15px 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 15px;
+            border-bottom: 1px solid #222;
         }
-
-        .title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        
+        .logo {
+            color: var(--yellow);
+            font-weight: bold;
+            font-size: 20px;
         }
-
-        .title h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
+        
+        nav span {
+            margin-left: 20px;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.2s;
         }
-
-        .badge {
-            background: rgba(37, 99, 235, 0.2);
-            border: 1px solid #3b82f6;
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 0.8rem;
-            color: #bfdbfe;
+        
+        nav span:hover {
+            color: white;
+        }
+        
+        .container {
+            padding: 20px;
+            max-width: 1300px;
+            margin: auto;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: var(--text);
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
-        /* Search Panel */
-        .search-panel {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+        
+        .balance {
+            font-size: 26px;
+            font-weight: bold;
         }
-
-        .input-wrapper {
-            flex: 1;
-            display: flex;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 4px;
-            min-width: 250px;
+        
+        .price {
+            font-size: 18px;
         }
-
-        .input-wrapper input {
-            flex: 1;
-            background: transparent;
+        
+        .green {
+            color: var(--green);
+        }
+        
+        .red {
+            color: var(--red);
+        }
+        
+        button {
+            background: var(--yellow);
             border: none;
-            padding: 16px 24px;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .input-wrapper input::placeholder {
-            color: #6b7280;
-        }
-
-        .btn {
-            padding: 16px 28px;
-            border-radius: 60px;
-            border: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            background: linear-gradient(145deg, #2563eb, #1d4ed8);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+            transition: all 0.2s;
+            font-size: 1rem;
         }
-
-        .btn:hover {
+        
+        button:hover {
+            background: #ffd700;
             transform: scale(1.02);
-            box-shadow: 0 0 30px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 0 15px rgba(240,185,11,0.5);
         }
-
-        .btn.secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn.secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
             box-shadow: none;
         }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            background: #0b0e11;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 6px;
+            font-size: 0.95rem;
         }
-
-        .stat-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 24px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        
+        input:focus {
+            outline: none;
+            border-color: var(--yellow);
         }
-
-        .stat-label {
-            color: #9ca3af;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+        
+        .history {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--yellow) #222;
         }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #60a5fa;
+        
+        .history::-webkit-scrollbar {
+            width: 6px;
         }
-
-        /* Main Grid */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 25px;
+        
+        .history::-webkit-scrollbar-track {
+            background: #222;
         }
-
-        .info-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 28px;
-            padding: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        
+        .history::-webkit-scrollbar-thumb {
+            background: var(--yellow);
+            border-radius: 3px;
         }
-
-        .info-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        
+        .history div {
+            border-bottom: 1px solid #222;
+            padding: 8px 5px;
         }
-
-        .info-header i {
-            font-size: 1.8rem;
-            color: #60a5fa;
-        }
-
-        .info-header h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-item-label {
-            color: #9ca3af;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-
-        .info-item-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .country-badge {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            background: rgba(37, 99, 235, 0.1);
-            padding: 16px;
+        
+        .vip {
+            background: linear-gradient(90deg, #f0b90b, #ffde59);
+            color: black;
+            padding: 4px 12px;
             border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
         }
-
-        .country-flag {
-            font-size: 3rem;
-            line-height: 1;
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #222;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: none;
+            border-left: 4px solid var(--yellow);
+            max-width: 300px;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease;
         }
-
-        .country-name {
-            font-size: 1.5rem;
-            font-weight: 700;
+        
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-
-        /* Map */
-        #map {
-            height: 350px;
-            border-radius: 24px;
-            margin-top: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1;
-        }
-
-        /* Loading */
-        .loading {
+        
+        .stats-row {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            color: #60a5fa;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
         }
-
-        .loading i {
-            font-size: 2rem;
-            animation: spin 1s linear infinite;
+        
+        .user-id {
+            color: var(--gray);
+            font-size: 0.7rem;
+            margin-bottom: 10px;
+            font-family: monospace;
         }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        
+        .chart-container {
+            position: relative;
+            height: 100px;
+            margin-top: 10px;
         }
-
-        /* Error */
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid #ef4444;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 20px 0;
-            color: #ef4444;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            text-align: center;
-            color: #6b7280;
+        
+        .multiplier-badge {
+            background: rgba(240,185,11,0.2);
+            color: var(--yellow);
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.8rem;
         }
-
-        /* Responsive */
+        
         @media (max-width: 900px) {
-            .main-grid {
+            .grid {
                 grid-template-columns: 1fr;
             }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .container { padding: 20px; }
-            .title h1 { font-size: 1.5rem; }
-            .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        
-        <!-- HEADER -->
-        <div class="header">
-            <div class="title">
-                <i class="fas fa-map-pin" style="font-size: 2rem; color: #60a5fa;"></i>
-                <h1>IP LOCALISATEUR</h1>
-            </div>
-            <div class="badge" id="deployBadge">
-                <i class="fas fa-check-circle"></i>
-                <span>Déploiement Render</span>
-            </div>
-        </div>
 
-        <!-- SEARCH PANEL -->
-        <div class="search-panel">
-            <div class="input-wrapper">
-                <input type="text" id="ipInput" placeholder="Entrez une adresse IP (ex: 8.8.8.8)">
-                <button class="btn" id="locateBtn">
-                    <i class="fas fa-search"></i>
-                    LOCALISER
-                </button>
-            </div>
-            <button class="btn secondary" id="myLocationBtn">
-                <i class="fas fa-location-dot"></i>
-                MA POSITION
-            </button>
-        </div>
+<header>
+    <div class="logo">💰 BINANCE FAUCET PRO • NODE.JS</div>
+    <nav>
+        <span onclick="refreshData()"><i class="fas fa-sync-alt"></i> Rafraîchir</span>
+        <span onclick="resetAccount()"><i class="fas fa-undo"></i> Reset</span>
+    </nav>
+</header>
 
-        <!-- STATS -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Statut serveur</div>
-                <div class="stat-value" id="serverStatus">⏳</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Cache</div>
-                <div class="stat-value" id="cacheStatus">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Temps réponse</div>
-                <div class="stat-value" id="responseTime">0ms</div>
-            </div>
-        </div>
+<div class="container">
+    <div class="grid">
 
-        <!-- ERROR MESSAGE -->
-        <div id="errorMessage" class="error-message" style="display: none;">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span id="errorText"></span>
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="main-grid">
-            <!-- LOCALISATION -->
-            <div class="info-card">
-                <div class="info-header">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h3>LOCALISATION</h3>
+        <!-- LEFT SIDE -->
+        <div>
+            <div class="card">
+                <h2>
+                    <span>📊</span> BNB/USDT
+                </h2>
+                <div class="price">
+                    <span id="price">300.00</span> USDT 
+                    <span id="change" class="green">+0.00%</span>
                 </div>
-                <div id="locationContent">
-                    <div style="text-align: center; padding: 40px; color: #6b7280;">
-                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                        <p>Entrez une IP pour voir sa localisation</p>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="chart"></canvas>
                 </div>
             </div>
 
-            <!-- RÉSEAU -->
-            <div class="info-card">
-                <div class="info-header">
-                    <i class="fas fa-network-wired"></i>
-                    <h3>RÉSEAU & FAI</h3>
+            <div class="card">
+                <h2>
+                    <span>🚰</span> Faucet Mining
+                </h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>Level: <span id="vipLevel" class="vip">VIP 0</span></span>
+                    <span class="user-id" id="userId">ID: chargement...</span>
                 </div>
-                <div id="networkContent">
-                    <div style="text-align: center; padding: 40px; color: #6b7280;">
-                        <i class="fas fa-plug" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                        <p>Données réseau en attente...</p>
-                    </div>
-                </div>
+                <button id="claimBtn">💰 CLAIM BNB REWARD</button>
+                <div id="timer" style="color: var(--yellow); margin-top: 10px; text-align: center; font-weight: bold;"></div>
             </div>
         </div>
 
-        <!-- MAP -->
-        <div id="map"></div>
+        <!-- RIGHT SIDE -->
+        <div>
+            <div class="card">
+                <h2>
+                    <span>💼</span> Spot Wallet
+                </h2>
+                <div class="balance"><span id="balance">0.00000000</span> BNB</div>
+                <div class="stats-row">
+                    <span>Total Earned:</span>
+                    <span id="total">0.00000000</span>
+                </div>
+                <div class="stats-row">
+                    <span>VIP Multiplier:</span>
+                    <span id="multiplier" class="multiplier-badge">1.0x</span>
+                </div>
+            </div>
 
-        <!-- FOOTER -->
-        <div class="footer">
-            <p>
-                <i class="fas fa-shield-alt"></i> Données IPinfo • 
-                <i class="fas fa-database"></i> Cache 1 heure • 
-                <i class="fas fa-cloud-upload-alt"></i> Hébergé sur Render
-            </p>
+            <div class="card">
+                <h2>
+                    <span>💸</span> Withdraw
+                </h2>
+                <input id="address" placeholder="BNB Address 0x... (simulation)">
+                <input id="amount" type="number" step="0.00000001" placeholder="Amount in BNB">
+                <button id="withdrawBtn">💸 WITHDRAW</button>
+            </div>
+
+            <div class="card">
+                <h2>
+                    <span>📜</span> Transactions
+                </h2>
+                <div class="history" id="history"></div>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // ========== CONFIGURATION ==========
-        let map = null;
-        let marker = null;
-        let startTime = 0;
+<div class="notification" id="notify"></div>
 
-        // ========== INITIALISATION ==========
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadServerStatus();
-            await locateMyIP();
-        });
+<!-- Font Awesome for icons (optional) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
-        // ========== ÉCOUTEURS ==========
-        document.getElementById('locateBtn').addEventListener('click', () => {
-            const ip = document.getElementById('ipInput').value.trim();
-            if (ip) {
-                locateIP(ip);
-            } else {
-                locateMyIP();
-            }
-        });
+<script>
+    // ========== CONFIGURATION ==========
+    let chart = null;
+    let claimCooldown = 0;
+    let userData = null;
+    
+    // Prix simulé avec variation lissée
+    let currentPrice = 300.00;
+    let targetPrice = 300.00;
+    let priceHistory = [];
 
-        document.getElementById('myLocationBtn').addEventListener('click', locateMyIP);
+    // ========== INITIALISATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+        loadUserData();
+        startPriceUpdates();
         
-        document.getElementById('ipInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('locateBtn').click();
+        // Vérifier le cooldown toutes les secondes
+        setInterval(() => {
+            if (claimCooldown > 0) {
+                claimCooldown--;
+                document.getElementById('timer').textContent = `⏳ ${claimCooldown}s`;
+            } else {
+                document.getElementById('timer').textContent = '✅ PRÊT';
+            }
+        }, 1000);
+    });
+
+    // ========== GRAPHIQUE STABLE ==========
+    function initChart() {
+        const ctx = document.getElementById('chart').getContext('2d');
+        
+        // Remplir l'historique avec des valeurs initiales
+        for (let i = 0; i < 30; i++) {
+            priceHistory.push(currentPrice);
+        }
+        
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(30).fill(''),
+                datasets: [{
+                    label: 'BNB/USDT',
+                    data: priceHistory,
+                    borderColor: '#f0b90b',
+                    backgroundColor: 'rgba(240,185,11,0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    tension: 0.4, // Courbe lissée
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 800, // Animation fluide
+                    easing: 'easeInOutQuad'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    x: { 
+                        display: false,
+                        grid: { display: false }
+                    },
+                    y: { 
+                        display: false,
+                        grid: { display: false }
+                    }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4
+                    }
+                }
             }
         });
+    }
 
-        // ========== CHARGEMENT STATUT SERVEUR ==========
-        async function loadServerStatus() {
-            try {
-                const response = await fetch('/api/status');
-                const data = await response.json();
+    // ========== MISE À JOUR PRIX LISSÉE ==========
+    function startPriceUpdates() {
+        setInterval(() => {
+            // Changer la cible aléatoirement
+            if (Math.random() < 0.3) { // 30% de chance de changer la cible
+                targetPrice = 290 + (Math.random() * 20); // Entre 290 et 310
+            }
+            
+            // Lissage : se rapprocher doucement de la cible
+            const diff = targetPrice - currentPrice;
+            currentPrice += diff * 0.1; // Se déplace de 10% vers la cible à chaque frame
+            
+            // Limiter les mouvements brusques
+            currentPrice = Math.max(285, Math.min(315, currentPrice));
+            
+            // Mettre à jour l'historique
+            priceHistory.shift();
+            priceHistory.push(currentPrice);
+            
+            // Calculer le changement
+            const change = ((priceHistory[priceHistory.length-1] - priceHistory[priceHistory.length-2]) / priceHistory[priceHistory.length-2] * 100) || 0;
+            
+            // Mettre à jour l'affichage
+            document.getElementById('price').textContent = currentPrice.toFixed(2);
+            
+            const changeEl = document.getElementById('change');
+            changeEl.textContent = (change > 0 ? '+' : '') + change.toFixed(2) + '%';
+            changeEl.className = change >= 0 ? 'green' : 'red';
+            
+            // Mettre à jour le graphique
+            if (chart) {
+                chart.data.datasets[0].data = [...priceHistory];
+                chart.update();
+            }
+            
+        }, 200); // Mise à jour rapide mais avec lissage
+    }
+
+    // ========== CHARGEMENT DONNÉES UTILISATEUR ==========
+    async function loadUserData() {
+        try {
+            const response = await fetch('/api/user');
+            const data = await response.json();
+            
+            if (data.success) {
+                userData = data;
+                claimCooldown = data.cooldown || 0;
                 
-                document.getElementById('serverStatus').innerHTML = `
-                    <span style="color: #10b981;">●</span> ONLINE
-                `;
-                document.getElementById('cacheStatus').innerHTML = data.cache?.size || '0';
-            } catch (error) {
-                document.getElementById('serverStatus').innerHTML = `
-                    <span style="color: #ef4444;">●</span> OFFLINE
-                `;
-                showError('Impossible de contacter le serveur');
+                document.getElementById('balance').textContent = data.balance;
+                document.getElementById('total').textContent = data.totalEarned;
+                document.getElementById('vipLevel').textContent = `VIP ${data.vipLevel}`;
+                document.getElementById('userId').textContent = `ID: ${data.userId.slice(0,8)}...`;
+                
+                // Multiplicateur VIP
+                const multipliers = [1.0, 1.2, 1.5, 2.0];
+                document.getElementById('multiplier').textContent = `${multipliers[data.vipLevel]}x`;
+                
+                // Activer/désactiver bouton claim
+                document.getElementById('claimBtn').disabled = claimCooldown > 0;
+                
+                loadHistory();
             }
+        } catch (error) {
+            console.error('Erreur chargement:', error);
+            showNotification('❌ Erreur de connexion');
         }
+    }
 
-        // ========== LOCALISER IP ==========
-        async function locateIP(ip = null) {
-            startTime = Date.now();
-            showLoading();
-            hideError();
-
-            try {
-                let url = '/api/locate';
-                if (ip) {
-                    url += `?ip=${encodeURIComponent(ip)}`;
-                }
-
-                const response = await fetch(url);
-                const result = await response.json();
-
-                if (result.success) {
-                    displayResults(result.data);
-                    updateStats(Date.now() - startTime, result.cached);
-                } else {
-                    showError(result.error || 'Erreur de localisation');
-                }
-
-            } catch (error) {
-                showError('Erreur de connexion au serveur');
-            }
-        }
-
-        // ========== LOCALISER MA PROPRE IP ==========
-        async function locateMyIP() {
-            document.getElementById('ipInput').value = '';
-            await locateIP();
-        }
-
-        // ========== AFFICHER LES RÉSULTATS ==========
-        function displayResults(data) {
-            if (!data) return;
-
-            // Drapeau
-            const flag = data.country_code ? getFlagEmoji(data.country_code) : '🏳️';
+    // ========== HISTORIQUE ==========
+    async function loadHistory() {
+        try {
+            const response = await fetch('/api/history');
+            const data = await response.json();
             
-            // LOCALISATION
-            let locationHtml = `
-                <div class="country-badge">
-                    <span class="country-flag">${flag}</span>
-                    <div>
-                        <div class="country-name">${data.country || 'Inconnu'}</div>
-                        <div style="color: #9ca3af;">${data.city || ''}${data.city && data.region ? ', ' : ''}${data.region || ''}</div>
-                    </div>
-                </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-item-label">ADRESSE IP</span>
-                        <span class="info-item-value" style="color: #60a5fa;">${data.ip || '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">TYPE</span>
-                        <span class="info-item-value">${data.type || 'IPv4'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">CODE POSTAL</span>
-                        <span class="info-item-value">${data.postal || '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">FUSEAU HORAIRE</span>
-                        <span class="info-item-value">${data.timezone || '—'}</span>
-                    </div>
-            `;
-
-            if (data.loc) {
-                locationHtml += `
-                    <div class="info-item">
-                        <span class="info-item-label">LATITUDE</span>
-                        <span class="info-item-value">${data.loc.split(',')[0]}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">LONGITUDE</span>
-                        <span class="info-item-value">${data.loc.split(',')[1]}</span>
-                    </div>
-                `;
-            }
-
-            locationHtml += `</div>`;
-            document.getElementById('locationContent').innerHTML = locationHtml;
-
-            // RÉSEAU
-            let networkHtml = `
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-item-label">ASN</span>
-                        <span class="info-item-value" style="color: #60a5fa;">${data.asn ? 'AS' + data.asn : '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">ORGANISATION</span>
-                        <span class="info-item-value">${data.as_name || data.org || '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">DOMAINE</span>
-                        <span class="info-item-value">${data.as_domain || '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-item-label">HOSTNAME</span>
-                        <span class="info-item-value">${data.hostname || '—'}</span>
-                    </div>
-                </div>
-                <div style="margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 16px;">
-                    <span style="color: #9ca3af;">🔒 Source:</span>
-                    <span style="color: #60a5fa; margin-left: 8px;">IPinfo.io</span>
-                </div>
-            `;
-            document.getElementById('networkContent').innerHTML = networkHtml;
-
-            // CARTE
-            updateMap(data);
-        }
-
-        // ========== METTRE À JOUR LA CARTE ==========
-        function updateMap(data) {
-            if (!data.loc) return;
-
-            const [lat, lng] = data.loc.split(',').map(Number);
+            const historyEl = document.getElementById('history');
+            historyEl.innerHTML = '';
             
-            if (!map) {
-                map = L.map('map').setView([lat, lng], 8);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '© OpenStreetMap, CartoDB',
-                    subdomains: 'abcd'
-                }).addTo(map);
+            if (data.success && data.transactions.length > 0) {
+                data.transactions.slice(0, 15).forEach(tx => {
+                    const date = new Date(tx.timestamp).toLocaleTimeString();
+                    const type = tx.type === 'claim' ? '✅' : '💸';
+                    const amount = parseFloat(tx.amount).toFixed(8);
+                    
+                    historyEl.innerHTML += `
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${date}</span>
+                            <span>${type} ${amount} BNB</span>
+                        </div>
+                    `;
+                });
             } else {
-                map.setView([lat, lng], 8);
+                historyEl.innerHTML = '<div style="color: #666; text-align: center;">Aucune transaction</div>';
             }
-
-            if (marker) {
-                map.removeLayer(marker);
-            }
-
-            marker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    className: 'custom-marker',
-                    html: '<i class="fas fa-map-pin" style="font-size: 2rem; color: #60a5fa;"></i>',
-                    iconSize: [32, 32],
-                    popupAnchor: [0, -16]
-                })
-            }).addTo(map);
-
-            marker.bindPopup(`
-                <b>${data.city || ''}, ${data.country || ''}</b><br>
-                IP: ${data.ip}<br>
-                ${data.as_name ? 'FAI: ' + data.as_name : ''}
-            `).openPopup();
+        } catch (error) {
+            console.error('Erreur historique:', error);
         }
+    }
 
-        // ========== METTRE À JOUR LES STATS ==========
-        function updateStats(responseTime, cached = false) {
-            document.getElementById('responseTime').innerHTML = `${responseTime}ms`;
-            if (cached) {
-                document.getElementById('responseTime').style.color = '#10b981';
-            } else {
-                document.getElementById('responseTime').style.color = '#60a5fa';
-            }
-        }
-
-        // ========== AFFICHER LE CHARGEMENT ==========
-        function showLoading() {
-            document.getElementById('locationContent').innerHTML = `
-                <div class="loading">
-                    <i class="fas fa-spinner"></i>
-                    <span style="margin-left: 15px;">Recherche en cours...</span>
-                </div>
-            `;
-            document.getElementById('networkContent').innerHTML = `
-                <div class="loading">
-                    <i class="fas fa-spinner"></i>
-                    <span style="margin-left: 15px;">Chargement des données...</span>
-                </div>
-            `;
-        }
-
-        // ========== AFFICHER UNE ERREUR ==========
-        function showError(message) {
-            document.getElementById('errorMessage').style.display = 'flex';
-            document.getElementById('errorText').innerText = message;
+    // ========== CLAIM ==========
+    document.getElementById('claimBtn').onclick = async () => {
+        try {
+            const response = await fetch('/api/claim', { method: 'POST' });
+            const data = await response.json();
             
-            document.getElementById('locationContent').innerHTML = `
-                <div style="text-align: center; padding: 40px; color: #ef4444;">
-                    <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                    <p>${message}</p>
-                </div>
-            `;
+            if (data.success) {
+                claimCooldown = 60;
+                document.getElementById('claimBtn').disabled = true;
+                
+                // Mettre à jour l'affichage
+                document.getElementById('balance').textContent = data.balance;
+                document.getElementById('total').textContent = data.totalEarned;
+                document.getElementById('vipLevel').textContent = `VIP ${data.vipLevel}`;
+                
+                // Mettre à jour le multiplicateur
+                const multipliers = [1.0, 1.2, 1.5, 2.0];
+                document.getElementById('multiplier').textContent = `${multipliers[data.vipLevel]}x`;
+                
+                showNotification(`✅ +${parseFloat(data.reward).toFixed(8)} BNB`);
+                loadHistory();
+            } else {
+                showNotification(`❌ ${data.message || 'Erreur'}`);
+            }
+        } catch (error) {
+            showNotification('❌ Erreur réseau');
         }
+    };
 
-        function hideError() {
-            document.getElementById('errorMessage').style.display = 'none';
+    // ========== WITHDRAW ==========
+    document.getElementById('withdrawBtn').onclick = async () => {
+        const address = document.getElementById('address').value.trim();
+        const amount = document.getElementById('amount').value;
+        
+        if (!address || address.length < 10) {
+            showNotification('❌ Adresse invalide');
+            return;
         }
+        
+        if (!amount || amount <= 0) {
+            showNotification('❌ Montant invalide');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, amount })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('balance').textContent = data.balance;
+                document.getElementById('address').value = '';
+                document.getElementById('amount').value = '';
+                
+                showNotification(`✅ Retrait simulé: ${amount} BNB`);
+                loadHistory();
+            } else {
+                showNotification(`❌ ${data.error || 'Erreur'}`);
+            }
+        } catch (error) {
+            showNotification('❌ Erreur réseau');
+        }
+    };
 
-        // ========== UTILITAIRE : DRAPEAU ==========
-        function getFlagEmoji(countryCode) {
-            if (!countryCode || countryCode.length !== 2) return '🏳️';
-            const codePoints = countryCode
-                .toUpperCase()
-                .split('')
-                .map(char => 127397 + char.charCodeAt());
-            return String.fromCodePoint(...codePoints);
+    // ========== RESET COMPTE ==========
+    async function resetAccount() {
+        if (!confirm('⚠️ Réinitialiser votre compte ? Cette action est irréversible.')) return;
+        
+        try {
+            const response = await fetch('/api/reset', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('✅ Compte réinitialisé');
+                loadUserData();
+            }
+        } catch (error) {
+            showNotification('❌ Erreur');
         }
-    </script>
+    }
+
+    // ========== RAFRAÎCHIR ==========
+    async function refreshData() {
+        await loadUserData();
+        showNotification('🔄 Données actualisées');
+    }
+
+    // ========== NOTIFICATIONS ==========
+    function showNotification(message) {
+        const notifyBox = document.getElementById('notify');
+        notifyBox.textContent = message;
+        notifyBox.style.display = 'block';
+        
+        setTimeout(() => {
+            notifyBox.style.display = 'none';
+        }, 3000);
+    }
+
+    // ========== EXPOSITION GLOBALE ==========
+    window.refreshData = refreshData;
+    window.resetAccount = resetAccount;
+</script>
+
 </body>
 </html>
